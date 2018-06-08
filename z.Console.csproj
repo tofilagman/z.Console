@@ -102,4 +102,11 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  
+   <Target Name="Nuget" AfterTargets="Build">
+    <Message Importance="high" Text="Nuget Cli Started" />
+    <Exec Command="Nuget Pack" ContinueOnError="false" />
+	 <Exec Command="Reddung -w -n" ContinueOnError="true" />
+  </Target>
+   
 </Project>
