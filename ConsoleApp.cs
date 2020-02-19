@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
@@ -12,7 +14,8 @@ namespace z.Console
         private Process _process;
         private AutoResetEvent _processEvent;
         private ConcurrentQueue<ConsoleOutputEventArgs> _consoleOutputQueue;
-        
+        private readonly Dictionary<string, string> _envVariables;
+
         private Task _processMonitor;
         private CancellationTokenSource _cancellationTokenSource;
         
@@ -33,7 +36,7 @@ namespace z.Console
             Password = "";
             Domain = "";
             CreateNoWindow = true;
-            
+            _envVariables = new Dictionary<string, string>();
             _consoleCtrlEventHandler += ConsoleCtrlHandler;
         }
 
@@ -46,7 +49,7 @@ namespace z.Console
             Password = "";
             Domain = "";
             CreateNoWindow = true;
-
+            _envVariables = new Dictionary<string, string>();
             _consoleCtrlEventHandler += ConsoleCtrlHandler;
         }
 
@@ -165,6 +168,11 @@ namespace z.Console
             return _processMonitor.Wait(millisecondsTimeout);
         }
 
+        public void WaitForInputHandle()
+        {
+            _process.WaitForInputIdle();
+        }
+
         /// <summary>
         /// Fires when the app exits.
         /// </summary>
@@ -186,26 +194,33 @@ namespace z.Console
             _process.StandardInput.WriteLine(Data, args);
         }
 
+        public void AddEnvironmentVariables(string key, string value) => _envVariables.Add(key, value);
+
         private void StartProcessAsync()
         {
+            var procInfo = new ProcessStartInfo
+            {
+                FileName = FileName,
+                Arguments = CmdLine,
+                CreateNoWindow = CreateNoWindow,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true,
+                RedirectStandardInput = true,
+                UseShellExecute = false,
+                Verb = Verb,
+                UserName = User,
+                Domain = Domain,
+                Password = GetSecureString(Password),
+                WorkingDirectory = WorkingDirectory,
+            };
+
+            foreach (var env in _envVariables)
+                procInfo.EnvironmentVariables[env.Key] = env.Value;
+
             _process = new Process
             {
                 EnableRaisingEvents = true,
-                StartInfo =
-                {
-                    FileName = FileName,
-                    Arguments = CmdLine,
-                    CreateNoWindow = CreateNoWindow,
-                    RedirectStandardError = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardInput = true,
-                    UseShellExecute = false,
-                    Verb = Verb,
-                    UserName = User,
-                    Domain = Domain,
-                    Password = GetSecureString(Password),
-                     WorkingDirectory = WorkingDirectory
-                },
+                StartInfo = procInfo
             };
 
             try

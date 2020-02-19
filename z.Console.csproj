@@ -5,7 +5,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>LJ Gomez</Authors>
     <Company>Exia</Company>
-    <Version>2.2.0</Version>
+    <Version>2.2.1</Version>
     <Product>z Console</Product>
     <Description>Console Lib</Description>
     <Copyright>2016</Copyright>
